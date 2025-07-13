@@ -136,18 +136,19 @@
       return keywords.filter(word => new RegExp(`\\b${word}\\b`, 'i').test(text));
     }
 
-    function exportToCSV() {
-      const rows = [['Candidate', 'ATS Score', 'Matched Skills', 'PDF Link']];
-      scoredResumes.forEach(r =>
-        rows.push([r.name, `${r.score}/100`, r.matchedWords.join('; '), r.url])
-      );
-      const csv = rows.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'ats_results.csv';
-      a.click();
-    }
+function exportToCSV() {
+  const rows = [['Candidate', 'ATS Score', 'Matched Skills']]; // Removed 'PDF Link'
+  scoredResumes.forEach(r =>
+    rows.push([r.name, `${r.score}/100`, r.matchedWords.join('; ')])
+  );
+  const csv = rows.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ats_results.csv';
+  a.click();
+}
+
 
     function exportToPDF() {
       if (scoredResumes.length === 0) return alert("No data to export.");
