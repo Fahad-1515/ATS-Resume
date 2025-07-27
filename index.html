@@ -2,111 +2,368 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ATS Resume Matcher</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATS Resume Matcher Pro</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
-      background: url('https://www.transparenttextures.com/patterns/cubes.png'), rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(8px);
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f5 100%);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
+    }
+    .gradient-btn {
+      background: linear-gradient(45deg, #4f6af5 0%, #3a5bf8 100%);
+      box-shadow: 0 4px 15px rgba(79, 106, 245, 0.3);
+      transition: all 0.3s ease;
+    }
+    .gradient-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 106, 245, 0.4);
+    }
+    .drop-zone {
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .drop-zone.active {
+      transform: scale(1.02);
+      background: rgba(79, 106, 245, 0.1);
+    }
+    .progress-bar {
+      transition: width 1s ease-in-out;
+    }
+    .keyword-chip {
+      background: rgba(79, 106, 245, 0.1);
+      border: 1px solid rgba(79, 106, 245, 0.2);
+      transition: all 0.2s ease;
+    }
+    .keyword-chip:hover {
+      background: rgba(79, 106, 245, 0.2);
+      transform: translateY(-1px);
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-start py-8 px-4 bg-gradient-to-r from-gray-100 to-gray-200">
+<body class="flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
 
-  <div class="w-full max-w-5xl bg-white/30 backdrop-blur-md p-6 rounded-2xl shadow-xl">
-    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">📄 ATS Resume Matcher</h1>
-
-    <!-- Job Description -->
-    <div class="mb-6">
-      <label class="font-semibold">Paste Job Description</label>
-      <textarea id="jobDescription" rows="6" class="w-full mt-2 p-4 border border-gray-300 rounded-lg bg-white/50 focus:ring focus:ring-blue-300" placeholder="Paste job description here..."></textarea>
+  <div class="w-full max-w-6xl glass-card p-8">
+    <!-- Header Section -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-full mb-4">
+        <i class="fas fa-file-alt text-2xl mr-2"></i>
+        <h1 class="text-3xl font-bold">ATS Resume Matcher Pro</h1>
+      </div>
+      <p class="text-gray-600">Optimize your resumes to pass through Applicant Tracking Systems</p>
     </div>
 
-    <!-- Upload Area -->
-    <div id="dropZone" class="border-2 border-dashed border-blue-500 text-center p-10 rounded-lg cursor-pointer bg-white/30 hover:bg-blue-50 transition mb-6">
-      <p class="text-lg font-medium text-blue-700">📤 Click or Drag & Drop PDFs here to Upload Resumes</p>
-      <input type="file" id="fileInput" multiple accept="application/pdf" style="display: none;">
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Job Description Section -->
+      <div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div class="flex items-center mb-4">
+            <div class="bg-blue-100 p-2 rounded-lg mr-3">
+              <i class="fas fa-clipboard-list text-blue-600"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-800">Job Description</h2>
+          </div>
+          <textarea id="jobDescription" rows="10" class="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-300 transition" placeholder="Paste the job description here..."></textarea>
+          <div class="mt-3 flex justify-between items-center">
+            <span class="text-sm text-gray-500" id="keywordCount">0 keywords extracted</span>
+            <button onclick="analyzeJobDescription()" class="gradient-btn text-white px-4 py-2 rounded-lg text-sm font-medium">
+              <i class="fas fa-magic mr-2"></i> Analyze
+            </button>
+          </div>
+        </div>
+
+        <!-- Extracted Keywords -->
+        <div id="keywordContainer" class="bg-white mt-4 p-6 rounded-xl shadow-sm border border-gray-100 hidden">
+          <div class="flex items-center mb-3">
+            <div class="bg-purple-100 p-2 rounded-lg mr-3">
+              <i class="fas fa-key text-purple-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-800">Important Keywords</h3>
+          </div>
+          <div id="keywordsList" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <!-- Resume Upload Section -->
+      <div>
+        <div id="dropZone" class="drop-zone border-2 border-dashed border-blue-300 p-8 rounded-xl cursor-pointer bg-white/50 hover:bg-blue-50 transition mb-6 text-center">
+          <div class="flex flex-col items-center justify-center">
+            <div class="bg-blue-100 p-4 rounded-full mb-3">
+              <i class="fas fa-cloud-upload-alt text-blue-600 text-2xl"></i>
+            </div>
+            <p class="text-lg font-medium text-gray-700 mb-1">Drag & Drop Resumes Here</p>
+            <p class="text-gray-500 text-sm mb-4">or click to browse files (PDF only)</p>
+            <input type="file" id="fileInput" multiple accept="application/pdf" class="hidden">
+            <button onclick="document.getElementById('fileInput').click()" class="gradient-btn text-white px-5 py-2 rounded-lg text-sm font-medium">
+              <i class="fas fa-folder-open mr-2"></i> Select Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Processing Status -->
+        <div id="processingStatus" class="hidden bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <div class="flex items-center">
+            <div class="animate-pulse mr-3">
+              <i class="fas fa-spinner fa-spin text-blue-500"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-700">Processing <span id="processedCount">0</span> of <span id="totalCount">0</span> resumes</p>
+              <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div id="progressBar" class="progress-bar h-2 rounded-full bg-blue-500" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Results Table -->
-    <div class="overflow-x-auto mb-4">
-      <table class="min-w-full table-auto bg-white/50 rounded-xl shadow-md">
-        <thead class="bg-blue-100 text-blue-800">
-          <tr>
-            <th class="py-3 px-4 text-left">Candidate</th>
-            <th class="py-3 px-4 text-left">ATS Score</th>
-            <th class="py-3 px-4 text-left">Matched Keywords</th>
-            <th class="py-3 px-4 text-left">PDF Link</th>
-          </tr>
-        </thead>
-        <tbody id="scoreTableBody" class="text-gray-800"></tbody>
-      </table>
-    </div>
+    <!-- Results Section -->
+    <div class="mt-10">
+      <div class="flex items-center mb-4">
+        <div class="bg-green-100 p-2 rounded-lg mr-3">
+          <i class="fas fa-chart-bar text-green-600"></i>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-800">Matching Results</h2>
+      </div>
+      
+      <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ATS Score</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match %</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matched Keywords</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="scoreTableBody" class="bg-white divide-y divide-gray-200">
+            <!-- Results will be inserted here -->
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Buttons -->
-    <div class="flex flex-wrap gap-4 justify-center mt-6">
-      <button onclick="exportToCSV()" class="px-5 py-2 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700">Export CSV</button>
-      <button onclick="exportToPDF()" class="px-5 py-2 bg-red-500 text-white rounded-full shadow hover:bg-red-600">Export PDF</button>
+      <div class="mt-6 flex flex-wrap gap-3 justify-between items-center">
+        <div class="text-sm text-gray-500">
+          <span id="resultsCount">0</span> resumes analyzed
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="exportToCSV()" class="gradient-btn text-white px-5 py-2.5 rounded-lg font-medium flex items-center">
+            <i class="fas fa-file-csv mr-2"></i> Export CSV
+          </button>
+          <button onclick="exportToPDF()" class="gradient-btn bg-gradient-to-r from-red-500 to-pink-500 text-white px-5 py-2.5 rounded-lg font-medium flex items-center">
+            <i class="fas fa-file-pdf mr-2"></i> Export PDF
+          </button>
+          <button onclick="shareResults()" class="gradient-btn bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-5 py-2.5 rounded-lg font-medium flex items-center">
+            <i class="fas fa-share-alt mr-2"></i> Share
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    
     const fileInput = document.getElementById("fileInput");
     const dropZone = document.getElementById("dropZone");
     const tableBody = document.getElementById("scoreTableBody");
+    const keywordContainer = document.getElementById("keywordContainer");
+    const keywordsList = document.getElementById("keywordsList");
+    const keywordCount = document.getElementById("keywordCount");
+    const processingStatus = document.getElementById("processingStatus");
+    const progressBar = document.getElementById("progressBar");
+    const processedCount = document.getElementById("processedCount");
+    const totalCount = document.getElementById("totalCount");
+    const resultsCount = document.getElementById("resultsCount");
+    
     let scoredResumes = [];
+    let jobKeywords = [];
 
-    dropZone.addEventListener('click', () => fileInput.click());
+    // Drag and drop functionality
     dropZone.addEventListener('dragover', e => {
       e.preventDefault();
-      dropZone.classList.add('bg-blue-100');
+      dropZone.classList.add('active');
     });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-blue-100'));
+    
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('active');
+    });
+    
     dropZone.addEventListener('drop', e => {
       e.preventDefault();
-      dropZone.classList.remove('bg-blue-100');
-      handleFiles({ target: { files: e.dataTransfer.files } });
+      dropZone.classList.remove('active');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFiles({ target: { files: e.dataTransfer.files } });
+      }
     });
+    
     fileInput.addEventListener('change', handleFiles);
 
-    async function handleFiles(event) {
+    function analyzeJobDescription() {
       const jobDesc = document.getElementById('jobDescription').value.trim();
-      if (!jobDesc) return alert("Paste job description first.");
-      const keywords = Array.from(new Set(jobDesc.toLowerCase().match(/\b\w{3,}\b/g)));
-
-      const files = [...event.target.files];
-      scoredResumes = [];
-
-      for (let file of files) {
-        if (file.type !== "application/pdf") continue;
-        const text = await extractTextFromPDF(file);
-        const score = getATSScore(text.toLowerCase(), keywords);
-        const matchedWords = getMatchedWords(text.toLowerCase(), keywords);
-        const url = URL.createObjectURL(file);
-        scoredResumes.push({ name: file.name, score, matchedWords, url });
+      if (!jobDesc) {
+        alert("Please enter a job description first.");
+        return;
       }
+      
+      // Extract keywords (3+ characters, remove common words)
+      const commonWords = new Set(['the', 'and', 'with', 'for', 'this', 'that', 'have', 'will', 'your', 'you']);
+      const words = jobDesc.toLowerCase().match(/\b\w{3,}\b/g) || [];
+      
+      // Count frequency and get unique keywords
+      const wordCount = {};
+      words.forEach(word => {
+        if (!commonWords.has(word)) {
+          wordCount[word] = (wordCount[word] || 0) + 1;
+        }
+      });
+      
+      // Sort by frequency and get top 30 keywords
+      jobKeywords = Object.entries(wordCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 30)
+        .map(entry => entry[0]);
+      
+      // Display keywords
+      keywordsList.innerHTML = '';
+      jobKeywords.forEach(keyword => {
+        const chip = document.createElement('span');
+        chip.className = 'keyword-chip px-3 py-1 rounded-full text-sm text-gray-700';
+        chip.textContent = keyword;
+        keywordsList.appendChild(chip);
+      });
+      
+      keywordCount.textContent = `${jobKeywords.length} keywords extracted`;
+      keywordContainer.classList.remove('hidden');
+    }
 
+    async function handleFiles(event) {
+      if (!jobKeywords.length) {
+        alert("Please analyze the job description first.");
+        return;
+      }
+      
+      const files = [...event.target.files];
+      if (!files.length) return;
+      
+      // Show processing status
+      processingStatus.classList.remove('hidden');
+      totalCount.textContent = files.length;
+      processedCount.textContent = '0';
+      progressBar.style.width = '0%';
+      
+      scoredResumes = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type !== "application/pdf") continue;
+        
+        try {
+          const text = await extractTextFromPDF(file);
+          const score = getATSScore(text.toLowerCase(), jobKeywords);
+          const matchedWords = getMatchedWords(text.toLowerCase(), jobKeywords);
+          const url = URL.createObjectURL(file);
+          
+          scoredResumes.push({
+            name: file.name.replace('.pdf', ''),
+            score,
+            matchedWords,
+            url,
+            matchPercentage: Math.round((matchedWords.length / jobKeywords.length) * 100)
+          });
+          
+          // Update progress
+          processedCount.textContent = i + 1;
+          progressBar.style.width = `${((i + 1) / files.length) * 100}%`;
+        } catch (error) {
+          console.error(`Error processing ${file.name}:`, error);
+        }
+      }
+      
+      // Hide processing status when done
+      processingStatus.classList.add('hidden');
+      
+      // Sort by score and render
       scoredResumes.sort((a, b) => b.score - a.score);
       renderTable();
     }
 
     function renderTable() {
       tableBody.innerHTML = '';
-      scoredResumes.forEach(res => {
-        tableBody.innerHTML += `
-          <tr class="border-b border-gray-200 hover:bg-gray-50">
-            <td class="py-3 px-4">${res.name}</td>
-            <td class="py-3 px-4">
-              <div class="w-full bg-gray-200 rounded-full h-4">
-                <div class="h-4 rounded-full ${res.score >= 80 ? 'bg-green-500' : res.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'}" style="width:${res.score}%"></div>
-              </div>
-              <span class="text-sm mt-1 inline-block">${res.score}/100</span>
+      resultsCount.textContent = scoredResumes.length;
+      
+      if (scoredResumes.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+              No resumes processed yet. Upload some PDF resumes to get started.
             </td>
-            <td class="py-3 px-4 text-sm">${res.matchedWords.join(', ')}</td>
-            <td class="py-3 px-4 text-blue-600 underline"><a href="${res.url}" target="_blank">View PDF</a></td>
+          </tr>`;
+        return;
+      }
+      
+      scoredResumes.forEach(res => {
+        const matchPercentage = res.matchPercentage;
+        const scoreColor = matchPercentage >= 80 ? 'text-green-600' : 
+                          matchPercentage >= 50 ? 'text-yellow-600' : 'text-red-600';
+        
+        tableBody.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-user text-blue-600"></i>
+                </div>
+                <div class="ml-4">
+                  <div class="text-sm font-medium text-gray-900">${res.name}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="h-2.5 rounded-full ${matchPercentage >= 80 ? 'bg-green-500' : 
+                  matchPercentage >= 50 ? 'bg-yellow-500' : 'bg-red-500'}" 
+                  style="width: ${matchPercentage}%"></div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap ${scoreColor} font-semibold">
+              ${matchPercentage}%
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1 max-w-xs">
+                ${res.matchedWords.slice(0, 5).map(word => `
+                  <span class="keyword-chip px-2 py-0.5 rounded text-xs">${word}</span>
+                `).join('')}
+                ${res.matchedWords.length > 5 ? `
+                  <span class="text-xs text-gray-500">+${res.matchedWords.length - 5} more</span>
+                ` : ''}
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <a href="${res.url}" target="_blank" class="text-blue-600 hover:text-blue-800 mr-3">
+                <i class="fas fa-eye"></i> View
+              </a>
+              <a href="${res.url}" download="${res.name}_resume.pdf" class="text-green-600 hover:text-green-800">
+                <i class="fas fa-download"></i> Download
+              </a>
+            </td>
           </tr>`;
       });
     }
@@ -115,12 +372,14 @@
       const typedarray = new Uint8Array(await file.arrayBuffer());
       const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
       let text = '';
+      
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         const strings = content.items.map(item => item.str);
-        text += strings.join(' ');
+        text += strings.join(' ') + ' ';
       }
+      
       return text;
     }
 
@@ -136,47 +395,116 @@
       return keywords.filter(word => new RegExp(`\\b${word}\\b`, 'i').test(text));
     }
 
-function exportToCSV() {
-  const rows = [['Candidate', 'ATS Score', 'Matched Skills']]; // Removed 'PDF Link'
-  scoredResumes.forEach(r =>
-    rows.push([r.name, `${r.score}/100`, r.matchedWords.join('; ')])
-  );
-  const csv = rows.map(row => row.map(field => `"${field}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'ats_results.csv';
-  a.click();
-}
-
+    function exportToCSV() {
+      if (scoredResumes.length === 0) {
+        alert("No data to export.");
+        return;
+      }
+      
+      const rows = [['Candidate Name', 'ATS Score', 'Match Percentage', 'Matched Keywords']];
+      scoredResumes.forEach(r => {
+        rows.push([
+          r.name,
+          r.score,
+          r.matchPercentage + '%',
+          r.matchedWords.join('; ')
+        ]);
+      });
+      
+      const csv = rows.map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ats_results.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
     function exportToPDF() {
-      if (scoredResumes.length === 0) return alert("No data to export.");
+      if (scoredResumes.length === 0) {
+        alert("No data to export.");
+        return;
+      }
+      
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-
-      const tableData = scoredResumes.map(res => [
-        res.name,
-        `${res.score}/100`,
-        res.matchedWords.join(', '),
-        res.url
-      ]);
-
+      
+      // Title
       doc.setFontSize(18);
-      doc.text("ATS Resume Matcher Results", 14, 20);
-
+      doc.setTextColor(40, 53, 147);
+      doc.text("ATS Resume Matcher Results", 105, 20, { align: 'center' });
+      
+      // Date
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generated on ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+      
+      // Table data
+      const tableData = scoredResumes.map(r => [
+        r.name,
+        r.score + '/100',
+        r.matchPercentage + '%',
+        r.matchedWords.slice(0, 5).join(', ') + (r.matchedWords.length > 5 ? '...' : '')
+      ]);
+      
+      // Generate table
       doc.autoTable({
-        startY: 30,
-        head: [['Candidate', 'ATS Score', 'Matched Skills', 'PDF Link']],
+        startY: 40,
+        head: [['Candidate', 'Score', 'Match %', 'Matched Keywords']],
         body: tableData,
-        styles: { fontSize: 10, cellWidth: 'wrap' },
-        columnStyles: { 3: { cellWidth: 60 } }
+        theme: 'grid',
+        headStyles: {
+          fillColor: [79, 106, 245],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [240, 240, 240]
+        },
+        margin: { top: 40 },
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+          overflow: 'linebreak'
+        },
+        columnStyles: {
+          0: { cellWidth: 40 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 'auto' }
+        }
       });
-
-      doc.save('ats_results.pdf');
+      
+      // Save the PDF
+      doc.save('ats_match_results.pdf');
     }
-    
-  </script>
 
+    function shareResults() {
+      if (scoredResumes.length === 0) {
+        alert("No results to share.");
+        return;
+      }
+      
+      // This is a basic implementation - would need to be enhanced for real sharing
+      const topCandidate = scoredResumes[0];
+      const message = `Top candidate: ${topCandidate.name} with ${topCandidate.matchPercentage}% match\n` +
+                     `View full results: ${window.location.href}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'ATS Resume Matcher Results',
+          text: message,
+          url: window.location.href
+        }).catch(err => {
+          console.log('Error sharing:', err);
+          alert('Could not share results. Please copy manually.');
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        prompt('Copy these results to share:', message);
+      }
+    }
+  </script>
 </body>
 </html>
