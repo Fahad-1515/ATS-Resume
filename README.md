@@ -1,5 +1,5 @@
-# ATS-Resume Score Acording to Job Description
-https://fahad-1515.github.io/ATS-Resume/
+# ATS-Resume Matcher Pro
+ Acording to Job Description
 1. Added Job Description Box  Drag Your Job Description for the Linekd in Profile.
    
 2.Open/Drag more than one Resume .pdf files .
